@@ -22,6 +22,7 @@ my %WriteMakefileArgs = (
   "NAME" => "Lingua::Word::Parser",
   "PREREQ_PM" => {
     "Bit::Vector" => 0,
+    "DBI" => 0,
     "Data::PowerSet" => 0,
     "IO::File" => 0,
     "strict" => 0,
@@ -33,7 +34,7 @@ my %WriteMakefileArgs = (
     "IPC::Open3" => 0,
     "Test::More" => 0
   },
-  "VERSION" => "0.01",
+  "VERSION" => "0.02",
   "test" => {
     "TESTS" => "t/*.t"
   }
@@ -42,6 +43,7 @@ my %WriteMakefileArgs = (
 
 my %FallbackPrereqs = (
   "Bit::Vector" => 0,
+  "DBI" => 0,
   "Data::PowerSet" => 0,
   "File::Spec" => 0,
   "IO::File" => 0,

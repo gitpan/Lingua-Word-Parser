@@ -31,6 +31,7 @@
       "runtime" : {
          "requires" : {
             "Bit::Vector" : "0",
+            "DBI" : "0",
             "Data::PowerSet" : "0",
             "IO::File" : "0",
             "perl" : "5.014",
@@ -60,7 +61,7 @@
          "web" : "https://github.com/ology/lingua-word-parser"
       }
    },
-   "version" : "0.01",
+   "version" : "0.02",
    "x_Dist_Zilla" : {
       "perl" : {
          "version" : "5.018001"

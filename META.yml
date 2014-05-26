@@ -19,6 +19,7 @@ meta-spec:
 name: Lingua-Word-Parser
 requires:
   Bit::Vector: 0
+  DBI: 0
   Data::PowerSet: 0
   IO::File: 0
   perl: 5.014
@@ -27,7 +28,7 @@ requires:
 resources:
   bugtracker: https://rt.cpan.org/Public/Dist/Display.html?Name=Lingua-Word-Parser
   repository: git://github.com/ology/lingua-word-parser.git
-version: 0.01
+version: 0.02
 x_Dist_Zilla:
   perl:
     version: 5.018001

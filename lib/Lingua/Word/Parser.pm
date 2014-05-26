@@ -4,10 +4,11 @@ use strict;
 use warnings;
 
 use Bit::Vector;
+use DBI;
 use Data::PowerSet;
 use IO::File;
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 
 
@@ -15,9 +16,14 @@ sub new {
     my $class = shift;
     my %args  = @_;
     my $self  = {
-        file   => $args{file} || undef,
-        lex    => $args{lex}  || undef,
-        word   => $args{word} || undef,
+        file   => $args{file},
+        dbhost => $args{dbhost} || 'localhost',
+        dbtype => $args{dbtype} || 'mysql',
+        dbname => $args{dbname},
+        dbuser => $args{dbuser},
+        dbpass => $args{dbpass},
+        lex    => $args{lex},
+        word   => $args{word},
         known  => {},
         masks  => {},
         combos => [],
@@ -36,6 +42,10 @@ sub _init {
     # Set lex if given data.
     if ( $self->{file} && -e $self->{file} ) {
         $self->fetch_lex;
+    }
+    elsif( $self->{dbname} )
+    {
+        $self->db_fetch;
     }
 }
 
@@ -56,6 +66,33 @@ sub fetch_lex {
     $fh->close;
 
     return $self->{lex};
+}
+
+
+sub db_fetch {
+    my $self = shift;
+
+    my $dsn = "DBI:$self->{dbtype}:$self->{dbname};$self->{dbhost}";
+
+    my $dbh = DBI->connect( $dsn, $self->{dbuser}, $self->{dbpass}, { RaiseError => 1, AutoCommit => 1 } )
+      or die "Unable to connect to $self->{dbname}: $DBI::errstr\n";
+
+    my $sql = 'SELECT prefix, affix, suffix, definition FROM fragment';
+
+    my $sth = $dbh->prepare($sql);
+    $sth->execute or die "Unable to execute '$sql': $DBI::errstr\n";
+
+    while( my @row = $sth->fetchrow_array ) {
+        my $part = $row[1];
+        $part    = $row[0] . $row[1] if $row[0];
+        $part   .= $row[2] if $row[2];
+        $self->{lex}{$part} = { defn => $row[3], re => qr/$part/ };
+    }
+    die "Fetch terminated early: $DBI::errstr\n" if $DBI::errstr;
+
+    $sth->finish or die "Unable to finish '$sql': $DBI::errstr\n";
+
+    $dbh->disconnect or die "Unable to disconnect from $self->{dbname}: $DBI::errstr\n";
 }
 
 
@@ -306,14 +343,21 @@ Lingua::Word::Parser
 
 =head1 VERSION
 
-version 0.01
+version 0.02
 
 =head1 SYNOPSIS
 
  use Lingua::Word::Parser;
  my $p = Lingua::Word::Parser->new(
-    word => shift || 'abioticaly',
+    word => 'abioticaly',
     file => 'eg/lexicon.dat',
+ );
+ # Or with a localhost database source:
+ my $p = Lingua::Word::Parser->new(
+    word   => 'abioticaly',
+    dbname => 'fragments',
+    dbuser => 'akbar',
+    dbpass => '0p3n53454m3',
  );
  my ($known) = $p->knowns; #warn Dumper $known;
  my $combos  = $p->power;  #warn Dumper $combos;
@@ -345,6 +389,26 @@ Arguments and defaults:
 
 Populate word-part => regular-expression lexicon.
 
+This file has lines of the form:
+
+ a(?=\w) opposite
+ ab(?=\w) away
+ (?<=\w)o(?=\w) combining
+ (?<=\w)tic possessing
+
+=head2 db_fetch()
+
+Populate the lexicon from a database source called C<`fragments`>.
+
+This database table has records of the form:
+
+  prefix  affix  suffix  definition
+  ---------------------------------
+          a      (?=\w)  opposite
+          ab     (?=\w)  away
+ (?<=\w)  o      (?=\w)  combining
+ (?<=\w)  tic            possessing
+
 =head2 knowns()
 
 Fingerprint the known word parts.
@@ -360,7 +424,7 @@ chunks or parts or "spans of adjacent characters."
 
 =head2 grouping()
 
-Make groups of "un-digitized" strings where B<k>nown and B<u>nknown.
+Make groups of "un-digitized" strings where B<k> = known and B<u> = unknown.
 
 =head2 rle()
 

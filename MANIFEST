@@ -8,6 +8,7 @@ Makefile.PL
 README
 README.md
 dist.ini
+eg/dbsynopsis
 eg/lexicon.dat
 eg/synopsis
 lib/Lingua/Word/Parser.pm
