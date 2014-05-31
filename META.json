@@ -61,7 +61,7 @@
          "web" : "https://github.com/ology/lingua-word-parser"
       }
    },
-   "version" : "0.02",
+   "version" : "0.0201",
    "x_Dist_Zilla" : {
       "perl" : {
          "version" : "5.018001"

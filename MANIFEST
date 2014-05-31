@@ -11,6 +11,7 @@ dist.ini
 eg/dbsynopsis
 eg/lexicon.dat
 eg/synopsis
+eg/word_part.sql
 lib/Lingua/Word/Parser.pm
 t/00-compile.t
 t/00-load.t

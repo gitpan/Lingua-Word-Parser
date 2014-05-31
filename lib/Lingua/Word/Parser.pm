@@ -8,7 +8,7 @@ use DBI;
 use Data::PowerSet;
 use IO::File;
 
-our $VERSION = '0.02';
+our $VERSION = '0.0201';
 
 
 
@@ -77,16 +77,14 @@ sub db_fetch {
     my $dbh = DBI->connect( $dsn, $self->{dbuser}, $self->{dbpass}, { RaiseError => 1, AutoCommit => 1 } )
       or die "Unable to connect to $self->{dbname}: $DBI::errstr\n";
 
-    my $sql = 'SELECT prefix, affix, suffix, definition FROM fragment';
+    my $sql = 'SELECT affix, definition FROM fragment';
 
     my $sth = $dbh->prepare($sql);
     $sth->execute or die "Unable to execute '$sql': $DBI::errstr\n";
 
     while( my @row = $sth->fetchrow_array ) {
-        my $part = $row[1];
-        $part    = $row[0] . $row[1] if $row[0];
-        $part   .= $row[2] if $row[2];
-        $self->{lex}{$part} = { defn => $row[3], re => qr/$part/ };
+        my $part = $row[0];
+        $self->{lex}{$part} = { re => qr/$part/, defn => $row[1] };
     }
     die "Fetch terminated early: $DBI::errstr\n" if $DBI::errstr;
 
@@ -218,10 +216,13 @@ sub score {
             $count{knownc}   += $knownc;
             $count{unknownc} += $unknownc;
         }
-        $val .= "$count{knowns}:$count{unknowns} chunks, $count{knownc}:$count{unknownc} chars => "
-          . join( ', ', @{ reconstruct( $self->{word}, @$c ) } );
+#        $val .= "$count{knowns}:$count{unknowns} chunks / $count{knownc}:$count{unknownc} chars => "
+#          . join( ', ', @{ reconstruct( $self->{word}, @$c ) } );
+#        warn "V:$val\n";
 
-        push @{ $self->{score}{$together} }, $val;
+        my $key = "$count{knowns}:$count{unknowns} chunks / $count{knownc}:$count{unknownc} chars";
+        $val = join ', ', @{ reconstruct( $self->{word}, @$c ) };
+        push @{ $self->{score}{$together} }, { score => $key, partition => $val };
     }
 
     return $self->{score};
@@ -343,7 +344,7 @@ Lingua::Word::Parser
 
 =head1 VERSION
 
-version 0.02
+version 0.0201
 
 =head1 SYNOPSIS
 
@@ -362,6 +363,7 @@ version 0.02
  my ($known) = $p->knowns; #warn Dumper $known;
  my $combos  = $p->power;  #warn Dumper $combos;
  my $scored  = $p->score;  #warn Dumper $score;
+ # The best guess is the last sorted score-set:
  warn Dumper $scored->{ [ sort keys $score ]->[-1] };
 
 =head1 DESCRIPTION
@@ -402,12 +404,12 @@ Populate the lexicon from a database source called C<`fragments`>.
 
 This database table has records of the form:
 
-  prefix  affix  suffix  definition
-  ---------------------------------
-          a      (?=\w)  opposite
-          ab     (?=\w)  away
- (?<=\w)  o      (?=\w)  combining
- (?<=\w)  tic            possessing
+         affix     definition
+  -----------------------------
+         a(?=\w)   opposite
+         ab(?=\w)  away
+  (?<=\w)o(?=\w)   combining
+  (?<=\w)tic       possessing
 
 =head2 knowns()
 
