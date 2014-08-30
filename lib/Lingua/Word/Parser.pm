@@ -1,5 +1,7 @@
 package Lingua::Word::Parser;
 
+# ABSTRACT: Parse a word into known and unknown parts
+
 use strict;
 use warnings;
 
@@ -8,7 +10,7 @@ use DBI;
 use Data::PowerSet;
 use IO::File;
 
-our $VERSION = '0.0210';
+our $VERSION = '0.0211';
 
 
 
@@ -229,7 +231,7 @@ sub score {
         my $defn = '';
         for my $i ( @$m )
         {
-            for my $j ( keys $self->{known} )
+            for my $j ( keys %{ $self->{known} } )
             {
                 $defn .= $self->{known}{$j}{defn} . '. ' if $self->{known}{$j}{mask} eq $i;
             }
@@ -355,11 +357,11 @@ __END__
 
 =head1 NAME
 
-Lingua::Word::Parser
+Lingua::Word::Parser - Parse a word into known and unknown parts
 
 =head1 VERSION
 
-version 0.0210
+version 0.0211
 
 =head1 SYNOPSIS
 
@@ -379,15 +381,11 @@ version 0.0210
  my $combos  = $p->power;  #warn Dumper $combos;
  my $scored  = $p->score;  #warn Dumper $score;
  # The best guess is the last sorted score-set:
- warn Dumper $scored->{ [ sort keys $score ]->[-1] };
+ warn Dumper $scored->{ [ sort keys %$score ]->[-1] };
 
 =head1 DESCRIPTION
 
 A C<Lingua::Word::Parser> breaks a word into known affixes.
-
-=head1 NAME
-
-Lingua::Word::Parser - Parse a word into known and unknown parts
 
 =head1 METHODS
 
